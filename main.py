@@ -1,5 +1,5 @@
 from summariser import summarise_headlines
-from email_utils import send_email
+from emails_utils import send_email
 import feedparser
 from datetime import datetime
 
