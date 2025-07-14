@@ -2,4 +2,3 @@ feedparser==6.0.10
 transformers==4.35.2
 torch==2.1.0
 newspaper3k==0.2.8
-smtplib-ssl==1.0.0
