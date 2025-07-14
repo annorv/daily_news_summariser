@@ -1,0 +1,109 @@
+# Daily AI News Digest Bot 📰
+
+This project sends you a **daily summary of the top 5 headlines in Artificial Intelligence**, straight to your inbox using GitHub Actions, Python, and a Transformer summarisation model (`t5-small`). No manual reading needed, just clean, bite-sized AI news to start your day.
+
+---
+
+## How It Works
+
+1. **Fetch** AI-related headlines via a Google News RSS feed
+2. **Summarise** the headlines using a Hugging Face Transformer (`t5-small`)
+3. **Send** a nicely formatted daily email via Gmail SMTP
+4. **Automate** the whole workflow using GitHub Actions (runs every day at 07:30 UTC)
+
+---
+
+## Project Structure
+
+```
+.
+├── .github/
+│   └── workflows/
+│       └── send_news.yml       # GitHub Action for daily email
+├── main.py                     # Main logic: fetch, summarise, email
+├── summariser.py              # Uses Hugging Face summariser pipeline
+├── emails_utils.py            # Email sending logic
+├── news_extract.py            # (Optional) Scrapes full article text
+├── requirements.txt           # Python dependencies
+└── README.md                  # Project overview (this file)
+```
+
+---
+
+## Setup Instructions
+
+### 1. Add GitHub Secrets
+
+Go to your repo → ⚙️ Settings → **Secrets and variables → Actions** → **New repository secret**, and add:
+
+| Secret Name  | Value                             |
+| ------------ | --------------------------------- |
+| `EMAIL_USER` | Your Gmail address                |
+| `EMAIL_PASS` | App password (not your real pass) |
+| `EMAIL_TO`   | Recipient email address           |
+
+> 💡 **Use an App Password** from your Gmail settings (Google > Security > App passwords).
+
+---
+
+### 2. Install Dependencies (locally or in CI)
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+### ↻ 3. Schedule the Workflow (already set up)
+
+Your GitHub Action (`send_news.yml`) runs **every day at 07:30 UTC**. You can also run it manually from the GitHub Actions tab.
+
+---
+
+## Tech Stack
+
+* **Python 3.10**
+* `feedparser` – For parsing RSS feeds
+* `transformers` – Hugging Face `t5-small` summarisation model
+* `smtplib` – For sending emails
+* **GitHub Actions** – For scheduling and automation
+
+---
+
+## Example Output
+
+**Subject:**
+
+```
+AI News Summary – July 14, 2025
+```
+
+**Body:**
+
+```
+Today's Top AI Headlines:
+
+- OpenAI explores AI agents that take real-world actions
+- Google DeepMind releases new robotics benchmark
+- Meta unveils its Llama 3 roadmap
+...
+```
+
+---
+
+## Optional Add-ons
+
+* 📰 `news_extract.py`: Use `newspaper3k` to scrape full articles (currently unused)
+* 🧠 Switch from `t5-small` to `bart-large-cnn` for richer summaries
+* ✨ Format email as HTML for a prettier layout
+* 🗂️ Archive daily digests to a `.md` or `.txt` file
+
+---
+
+## Future Plans
+
+* Add Energy sector news alongside AI
+* Create a weekly recap version
+* Turn this into a public-facing newsletter or API
+
+---
