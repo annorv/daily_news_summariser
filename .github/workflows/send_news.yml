@@ -3,25 +3,25 @@ name: Daily AI News Email
 on:
   schedule:
     - cron: "30 7 * * *"  # Every day at 07:30 UTC
-  workflow_dispatch:       # Allow manual runs too
+  workflow_dispatch:  # Allow manual runs too
 
 jobs:
   run-script:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
-
+        uses: actions/checkout@v4
+        
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: 3.10
-
+          python-version: "3.10"
+          
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
+          
       - name: Run script
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}

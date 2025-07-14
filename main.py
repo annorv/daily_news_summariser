@@ -10,14 +10,23 @@ def fetch_ai_news():
     return headlines
 
 def main():
-    headlines = fetch_ai_news()
-    summary = summarise_headlines(headlines)
-
-    today = datetime.now().strftime('%B %d, %Y')
-    subject = f"AI News Summary – {today}"
-    body = f"📰 Today's Top AI Headlines:\n\n" + "\n".join(f"- {s}" for s in summary)
-
-    send_email(subject, body)
+    try:
+        headlines = fetch_ai_news()
+        if not headlines:
+            print("No headlines found")
+            return
+            
+        summary = summarise_headlines(headlines)
+        today = datetime.now().strftime('%B %d, %Y')
+        subject = f"AI News Summary – {today}"
+        body = f"📰 Today's Top AI Headlines:\n\n" + "\n".join(f"- {s}" for s in summary)
+        
+        send_email(subject, body)
+        print("Email sent successfully!")
+        
+    except Exception as e:
+        print(f"Error: {e}")
+        raise
 
 if __name__ == "__main__":
     main()
