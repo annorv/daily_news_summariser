@@ -1,6 +1,6 @@
 # main.py
 from news_processor import NewsProcessor
-from email_utils import send_email
+from emails_utils import send_email
 from datetime import datetime
 import logging
 
