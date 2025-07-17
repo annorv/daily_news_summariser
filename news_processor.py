@@ -11,18 +11,35 @@ logger = logging.getLogger(__name__)
 
 class NewsProcessor:
     def __init__(self):
-        # Initialise summarisation pipeline
-        try:
-            self.summarizer = pipeline(
-                "summarisation", 
-                model="facebook/bart-large-cnn",  # Better model for news summarisation
-                tokenizer="facebook/bart-large-cnn"
-            )
-            logger.info("Summarisation model loaded successfully")
-        except Exception as e:
-            logger.error(f"Failed to load summarisation model: {e}")
-            # Fallback to smaller model
-            self.summarizer = pipeline("summarisation", model="t5-small", tokenizer="t5-small")
+        # Initialize summarization pipeline with robust fallbacks
+        self.summarizer = None
+        
+        # Try different models in order of preference
+        models_to_try = [
+            ("facebook/bart-large-cnn", "BART Large CNN"),
+            ("t5-small", "T5 Small"),
+            ("t5-base", "T5 Base"),
+            ("google/pegasus-xsum", "Pegasus XSum")
+        ]
+        
+        for model_name, model_desc in models_to_try:
+            try:
+                logger.info(f"Attempting to load {model_desc} model...")
+                self.summarizer = pipeline(
+                    "summarization", 
+                    model=model_name,
+                    tokenizer=model_name
+                )
+                logger.info(f"Successfully loaded {model_desc} model")
+                break
+            except Exception as e:
+                logger.warning(f"Failed to load {model_desc} model: {e}")
+                continue
+        
+        # If all models fail, create a simple fallback
+        if self.summarizer is None:
+            logger.error("All summarization models failed to load. Using simple text truncation.")
+            self.summarizer = None
     
     def fetch_ai_news(self, num_articles=5):
         """Fetch AI news from multiple sources"""
@@ -70,7 +87,7 @@ class NewsProcessor:
         seen_titles = set()
         
         for article in articles:
-            # Normalise title for comparison
+            # Normalize title for comparison
             normalized_title = re.sub(r'[^\w\s]', '', article['title'].lower())
             
             # Check if we've seen a similar title
@@ -123,7 +140,7 @@ class NewsProcessor:
                 content = self.extract_article_content(article['url'])
                 
                 if content and content['text']:
-                    # Use full article text for summarisation
+                    # Use full article text for summarization
                     text_to_summarize = content['text']
                 else:
                     # Fallback to RSS summary
@@ -168,6 +185,10 @@ class NewsProcessor:
         if not text or len(text.strip()) < 100:
             return "Detailed summary unavailable - insufficient content."
         
+        # If no summarizer available, use simple text truncation
+        if self.summarizer is None:
+            return self._simple_summary(text)
+        
         try:
             # Clean and prepare text
             cleaned_text = self._clean_text(text)
@@ -180,11 +201,15 @@ class NewsProcessor:
                 
                 summaries = []
                 for chunk in chunks[:3]:  # Limit to 3 chunks
-                    summary = self.summarizer(chunk, 
-                                            max_length=150, 
-                                            min_length=50, 
-                                            do_sample=False)
-                    summaries.append(summary[0]['summary_text'])
+                    try:
+                        summary = self.summarizer(chunk, 
+                                                max_length=150, 
+                                                min_length=50, 
+                                                do_sample=False)
+                        summaries.append(summary[0]['summary_text'])
+                    except Exception as e:
+                        logger.warning(f"Error summarizing chunk: {e}")
+                        summaries.append(chunk[:200] + "...")
                 
                 return ' '.join(summaries)
             else:
@@ -196,7 +221,26 @@ class NewsProcessor:
                 
         except Exception as e:
             logger.error(f"Error creating detailed summary: {e}")
-            return "Detailed summary generation failed."
+            return self._simple_summary(text)
+    
+    def _simple_summary(self, text):
+        """Fallback summary method using simple text processing"""
+        sentences = [s.strip() for s in text.split('.') if len(s.strip()) > 30]
+        
+        # Take first 3-4 sentences or up to 300 characters
+        summary_sentences = []
+        char_count = 0
+        
+        for sentence in sentences[:6]:
+            if char_count + len(sentence) > 300:
+                break
+            summary_sentences.append(sentence)
+            char_count += len(sentence)
+        
+        if summary_sentences:
+            return '. '.join(summary_sentences) + '.'
+        else:
+            return text[:300] + '...' if len(text) > 300 else text
     
     def _extract_key_points(self, text):
         """Extract key points from the article"""
